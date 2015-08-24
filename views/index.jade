@@ -4,4 +4,12 @@ block content
   div.generations
 
 block after_js
+  script#template-individual(type="text/template").
+    <div class="well">
+      <p class="score"><%= monkey.score %></p>
+      <% _.each(monkey.paragraphs, function(p, i){ %>
+        <p><% p.length == 0 ? '<br>' : _.each(p, function(c, j){ %>
+          <%= c == ' ' ? '<span>&nbsp;</span>' : ('<span style="color:' + ((goalText[i] && goalText[i][j]) ? (goalText[i][j] == c ? 'green' : 'red') : 'black') + ';">' + c + '</span>') %><% }) %></p>
+      <% }) %>
+    </div>
   script(src='/js/main.js')

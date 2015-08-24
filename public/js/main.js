@@ -225,9 +225,13 @@ function compareTwoParagraph(p_1, p_2){
           diffChars += 1 * -diffLength;
         }
 
-        if (Math.abs(diffLength) > 10){
+        if (Math.abs(diffLength) > 0){
           diffChars += 200 * Math.abs(diffLength);
-        } else {
+        }
+
+        //if (Math.abs(diffLength) > 10){
+        //  diffChars += 200 * Math.abs(diffLength);
+        //} else {
           if (diffLength > 0){
             if (p_g.length != 0){
               p_m = p_m.substr(0, p_g.length);
@@ -248,7 +252,7 @@ function compareTwoParagraph(p_1, p_2){
             //console.log('same length');
             diffChars += compareTwoParagraph(p_m, p_g);
           }
-        }
+        //}
         //if (p_m === undefined){
         //  // we have fewer paragraphs than the goal
         //  diffChars += 1000;
@@ -456,7 +460,7 @@ function compareTwoParagraph(p_1, p_2){
       var newParagraphs = paragraphs.slice(0);
       var i = _.random(0, paragraphs.length - 1);
       if (i == 17){
-        console.log('yeah2');
+        //console.log('yeah2');
       }
       var p = newParagraphs[i];
       if (p.length == 0){
@@ -501,7 +505,7 @@ function compareTwoParagraph(p_1, p_2){
       var newParagraphs = paragraphs.slice(0);
       var i = _.random(0, paragraphs.length - 1);
       if (i == 17){
-        console.log('yeah');
+        //console.log('yeah');
       }
       var p = newParagraphs[i];
       if (p.length == 0){
@@ -530,10 +534,10 @@ function compareTwoParagraph(p_1, p_2){
         } else {
           newParagraphs[i] = p.substr(0, nthChar) + String.fromCharCode(ascii) + p.substr(nthChar+1);
         }
-        if (i == 17){
-          console.log('paragraphs[17] =    ' + paragraphs[17]);
-          console.log('newParagraphs[17] = ' + newParagraphs[17]);
-        }
+        //if (i == 17){
+        //  console.log('paragraphs[17] =    ' + paragraphs[17]);
+        //  console.log('newParagraphs[17] = ' + newParagraphs[17]);
+        //}
       }
 
       return newParagraphs;
@@ -569,11 +573,13 @@ function compareTwoParagraph(p_1, p_2){
         } else {
           newParagraphs[i] = p.substr(0, nthChar) + String.fromCharCode(ascii) + p.substr(nthChar+1);
         }
+        /*
         if (i == 17){
           console.log('yeah3');
           console.log('paragraphs[17] =    ' + paragraphs[17]);
           console.log('newParagraphs[17] = ' + newParagraphs[17]);
         }
+        */
       }
 
       return newParagraphs;
@@ -589,12 +595,48 @@ function compareTwoParagraph(p_1, p_2){
     },
   });
 
-  var GenerationView = Backbone.View.extend({
-    template: _.template('<h1><%= nthGeneration %></h1><pre><%= JSON.stringify(population, null, 2) %></pre>'),
+  var IndividualView = Backbone.View.extend({
+    tagName: 'div',
+    className: 'monkey col-xs-12 col-sm-6 col-md-3',
+    template: _.template($('#template-individual').html()),
     render: function(){
+      this.$el.html(this.template({
+        monkey: this.model.toJSON(),
+        goalText: window.GA.goalText,
+      }));
+      return this;
+    },
+  });
+
+  var PopulationView = Backbone.View.extend({
+    tagName: 'div',
+    className: 'container-fluid',
+    template: _.template('<div class="row"></div>'),
+    render: function(){
+      var individualViews = _.map(this.collection.slice(0, 4), function(individual){
+        return (new IndividualView({
+          model: individual,
+        })).render();
+      }, this);
+      this.$el.html( this.template() );
+      this.$el.find('.row').html(_.pluck(individualViews, 'el') );
+      return this;
+    },
+  });
+
+  var GenerationView = Backbone.View.extend({
+    template: _.template('<h1><%= nthGeneration %></h1>'),
+    render: function(){
+
       if (this.model.get('nthGeneration') % 100 == 99){
       //if (this.model.get('nthGeneration')){
-        this.$el.html(this.template(this.model.toJSON()));
+        this.populationView = new PopulationView({
+          collection: this.model.get('population'),
+        });
+        this.$el.html(this.template({
+          nthGeneration: this.model.get('nthGeneration'),
+        }));
+        this.$el.append(this.populationView.render().el);
       } else {
 
       }
@@ -630,6 +672,8 @@ function compareTwoParagraph(p_1, p_2){
     var lastPopulation = new Monkeys();
     lastPopulation.fetch();
     if (lastPopulation.size() == 0){
+      lastPopulation.initialize();
+        /*
       lastPopulation.add([
         new Monkey({ "paragraphs": [
           "Our Father in h",
@@ -676,6 +720,7 @@ function compareTwoParagraph(p_1, p_2){
           "    now and for ever. Amen."
         ], }),
       ], {});
+      */
     } else {
       window.localStorage.clear();
     }
@@ -685,7 +730,7 @@ function compareTwoParagraph(p_1, p_2){
       nthGeneration: 1,
       collectionClass: Monkeys,
     }, {
-      previousPopulation: lastPopulation,
+      previousPopulation: lastPopulation.size() > 0 ? lastPopulation : null,
     });
 
     firstGeneration.evaluate().sort();
@@ -693,7 +738,7 @@ function compareTwoParagraph(p_1, p_2){
     generations.add(firstGeneration);
 
     var previousGeneration = firstGeneration;
-    var maxGenerations = 2000;
+    var maxGenerations = 5000;
     var nthGen = 1;
     var findOneGeneration = function(){
       nthGen++;
