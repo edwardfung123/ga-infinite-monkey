@@ -55,6 +55,28 @@ function compareTwoParagraph(p_1, p_2){
     '    now and for ever. Amen.',
   ];
 
+  var chartData = new google.visualization.DataTable();
+  chartData.addColumn('string', 'Generation');
+  chartData.addColumn('number', 'Elite Score');
+  var chart = null;
+  function initChart(){
+    // Set chart options
+    var options = {'title':'How Much Pizza I Ate Last Night',
+      'width':400,
+      'height':300};
+    chart = new google.visualization.LineChart(document.getElementById('elite-score'));
+    chart.draw(chartData, options);
+  }
+
+  initChart();
+
+  function drawChart(generation, score){
+    chartData.addRow([generation, score]);
+    chart.draw(chartData);
+  }
+
+  GA.goalText = goalText;
+
   var Generation = Backbone.Model.extend({
     defaults: function(){
       var ret = {
@@ -628,7 +650,7 @@ function compareTwoParagraph(p_1, p_2){
     template: _.template('<h1><%= nthGeneration %></h1>'),
     render: function(){
 
-      if (this.model.get('nthGeneration') % 100 == 99){
+      if (this.model.get('nthGeneration') % 100 == 0){
       //if (this.model.get('nthGeneration')){
         this.populationView = new PopulationView({
           collection: this.model.get('population'),
@@ -646,7 +668,12 @@ function compareTwoParagraph(p_1, p_2){
 
   var GenerationsView = Backbone.View.extend({
     initialize: function(options){
-      this.collection.on('add', this.renderNewGeneration, this);
+      this.collection.on('add', function(model, collection){
+        var gen = model.get('generation');
+        var score = model.get('population').at(0).get('score');
+        drawChart(gen, score);
+        this.renderNewGeneration(model, collection);
+      }, this);
     },
 
     render: function(){
@@ -661,6 +688,9 @@ function compareTwoParagraph(p_1, p_2){
       this.$el.prepend(view.render().el);
     },
   });
+
+  GA.Monkey = Monkey;
+  GA.Monkeys = Monkeys;
 
   $(document).ready(function(){
     var generations = new Generations();
@@ -727,7 +757,7 @@ function compareTwoParagraph(p_1, p_2){
 
     var firstGeneration = new Generation({
       maxPopulation: 20,
-      nthGeneration: 1,
+      nthGeneration: 0,
       collectionClass: Monkeys,
     }, {
       previousPopulation: lastPopulation.size() > 0 ? lastPopulation : null,
@@ -736,6 +766,16 @@ function compareTwoParagraph(p_1, p_2){
     firstGeneration.evaluate().sort();
 
     generations.add(firstGeneration);
+
+    /*********************\
+     *
+     * Draw the Chart
+     *
+    \*********************/
+    if (lastPopulation.size() > 0){
+      //chartData.addRows([0, lastPopulation.at(0).get('score')]);
+      drawChart(0, lastPopulation.at(0).get('score'));
+    }
 
     var previousGeneration = firstGeneration;
     var maxGenerations = 5000;
@@ -764,8 +804,4 @@ function compareTwoParagraph(p_1, p_2){
 
     setTimeout(findOneGeneration, 50);
   });
-
-  GA.Monkey = Monkey;
-  GA.Monkeys = Monkeys;
-  GA.goalText = goalText;
 })(window.GA);

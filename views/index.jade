@@ -1,6 +1,8 @@
 extends layout
 
 block content
+  div#chart-area
+    div#elite-score
   div.generations
 
 block after_js
@@ -12,4 +14,18 @@ block after_js
           <%= c == ' ' ? '<span>&nbsp;</span>' : ('<span style="color:' + ((goalText[i] && goalText[i][j]) ? (goalText[i][j] == c ? 'green' : 'red') : 'black') + ';">' + c + '</span>') %><% }) %></p>
       <% }) %>
     </div>
-  script(src='/js/main.js')
+  script(src='https://www.google.com/jsapi')
+  script(type='text/javascript').
+    // Load the Visualization API and the piechart package.
+    google.load('visualization', '1.0', {'packages':['corechart']});
+
+    // Set a callback to run when the Google Visualization API is loaded.
+    google.setOnLoadCallback(function(){
+      (function(d, t) {
+        var g = d.createElement(t),
+        s = d.getElementsByTagName(t)[0];
+        g.src = '/js/main.js';
+        s.parentNode.insertBefore(g, s);
+      }(document, 'script'));
+    });
+  //-script(src='/js/main.js')
